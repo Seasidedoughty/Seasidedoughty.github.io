@@ -4,7 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ELOHIM 777">
 <title>ELOHIM 777 — Player</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -265,6 +272,8 @@
       Load<span class="lbl-long">&nbsp;Folder</span>
     </button>
     <button class="load-btn ghost" id="pickFiles">+ Files</button>
+    <button class="load-btn ghost" id="installApp" hidden>Install</button>
+    <button class="load-btn ghost" id="widgetBtn" hidden>Widget</button>
     <button class="load-btn ghost" id="piSign">Sign in</button>
     <button class="load-btn ghost" id="openSettings">Settings</button>
     <input type="file" id="folderInput" webkitdirectory directory multiple>
@@ -346,6 +355,12 @@
     <section class="set-block">
       <h2>Playlists and place</h2>
       <p class="set-note">Playlists, the queue, volume, and your place in the song stay in this browser. Playback stays paused until you press play.</p>
+    </section>
+    <section class="set-block">
+      <h2>Chrome app</h2>
+      <p class="set-note">Chrome can install this player as its own app. It gets an icon and opens in its own window. On desktop Chrome, Widget is a small player that stays on top of other windows. Refresh the page once if Install is not offered yet.</p>
+      <div class="set-row"><span>Install as an app</span><button class="load-btn" id="installAppSettings">Install</button></div>
+      <div class="set-row"><span>Mini player widget</span><button class="load-btn ghost" id="openWidget">Widget</button></div>
     </section>
     <section class="set-block">
       <h2>Pi</h2>
@@ -895,6 +910,10 @@
     nativePicking = false;
   };
   function nativePlayState(){
+    if('mediaSession' in navigator){
+      try{ navigator.mediaSession.playbackState = audio.paused ? 'paused' : 'playing'; }catch(e){}
+    }
+    if(typeof paintWidget === 'function') paintWidget();
     if(!NATIVE || !window.Android.setPlaying) return;
     const t = byId.get(queue[qpos]);
     try{ window.Android.setPlaying(!audio.paused, t ? t.title : ''); }catch(e){}
@@ -1125,6 +1144,82 @@
       restorePlace(session);
     }
   }
+  let pipWin = null;
+  let deferredPrompt = null;
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  function paintWidget(){
+    if(!pipWin || pipWin.closed) return;
+    const doc = pipWin.document;
+    const title = doc.getElementById('wTitle');
+    const sub = doc.getElementById('wSub');
+    const play = doc.getElementById('wPlay');
+    if(!title || !play) return;
+    title.textContent = $('#nowTitle').textContent || 'ELOHIM 777';
+    sub.textContent = $('#nowSub').textContent || '';
+    play.textContent = audio.paused ? 'Play' : 'Pause';
+  }
+  async function openWidget(){
+    if(!window.documentPictureInPicture){
+      toast('The floating widget needs desktop Chrome. Install still works from the Chrome menu.');
+      return;
+    }
+    if(pipWin && !pipWin.closed){ try{ pipWin.focus(); }catch(e){} return; }
+    let pip;
+    try{ pip = await documentPictureInPicture.requestWindow({ width: 360, height: 156 }); }
+    catch(e){ if(e && e.name !== 'AbortError') toast('Chrome did not open the widget'); return; }
+    pipWin = pip;
+    const doc = pip.document;
+    doc.title = 'ELOHIM 777';
+    const style = doc.createElement('style');
+    style.textContent = 'html,body{margin:0;height:100%;background:#0a0a12;color:#eae4d6;font-family:system-ui,sans-serif}'
+      + 'body{display:flex;flex-direction:column;justify-content:center;padding:14px 16px;box-sizing:border-box}'
+      + '#wTitle{font-size:15px;font-weight:650;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+      + '#wSub{margin-top:3px;font-size:11px;color:#8f8a7c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+      + '.row{display:flex;gap:8px;margin-top:12px}'
+      + 'button{flex:1;background:#12121d;color:#eae4d6;border:1px solid rgba(234,228,214,0.14);border-radius:4px;padding:8px 0;font:inherit;font-size:13px;cursor:pointer}'
+      + '#wPlay{background:linear-gradient(150deg,#e8a33d,#c9622b);color:#1a1206;border-color:transparent;font-weight:650}';
+    doc.head.append(style);
+    doc.body.innerHTML = '<div id="wTitle"></div><div id="wSub"></div><div class="row"><button id="wPrev" type="button">Prev</button><button id="wPlay" type="button">Play</button><button id="wNext" type="button">Next</button></div>';
+    doc.getElementById('wPrev').onclick = () => stepPrev();
+    doc.getElementById('wPlay').onclick = () => $('#playBtn').click();
+    doc.getElementById('wNext').onclick = () => stepNext(false);
+    pip.addEventListener('pagehide', () => { pipWin = null; });
+    paintWidget();
+  }
+  async function doInstall(){
+    if(standalone){ toast('This window is already the installed app'); return; }
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      try{ await deferredPrompt.userChoice; }catch(e){}
+      deferredPrompt = null;
+      $('#installApp').hidden = true;
+      return;
+    }
+    toast('In Chrome, open the menu and choose Install ELOHIM 777');
+  }
+  function showInstall(){
+    if(standalone) return;
+    $('#installApp').hidden = false;
+  }
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    showInstall();
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    $('#installApp').hidden = true;
+    toast('Installed. Open ELOHIM 777 from Chrome’s apps.');
+  });
+  $('#installApp').addEventListener('click', doInstall);
+  $('#installAppSettings').addEventListener('click', doInstall);
+  $('#widgetBtn').addEventListener('click', openWidget);
+  $('#openWidget').addEventListener('click', openWidget);
+  if(window.documentPictureInPicture) $('#widgetBtn').hidden = false;
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
   $('#openSettings').addEventListener('click', () => $('#pageSettings').classList.add('on'));
   $('#closeSettings').addEventListener('click', () => $('#pageSettings').classList.remove('on'));
   $('#scanAudio').addEventListener('change', savePL);
