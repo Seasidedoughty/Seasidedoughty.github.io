@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a12">
+<link rel="manifest" href="manifest.json">
 <title>ELOHIM 777 NOTEPEN</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -32,9 +33,14 @@
   button,input,textarea{font-family:inherit; color:inherit;}
   button{cursor:pointer;}
   header{
-    display:flex; align-items:center; gap:12px;
+    display:flex; align-items:center; gap:10px;
     padding:12px 16px 8px; flex-shrink:0;
   }
+  .back{
+    background:transparent; border:1px solid var(--sun-gold); color:var(--sun-gold);
+    border-radius:3px; padding:7px 10px; font-size:13px; font-weight:600; flex-shrink:0;
+  }
+  .back[hidden]{display:none;}
   .glyph{width:28px; height:28px; flex-shrink:0;}
   h1{
     font-family:'Cinzel', serif; font-weight:700; font-size:16px; letter-spacing:0.14em;
@@ -73,11 +79,14 @@
   }
   .chip:hover{border-color:var(--sun-gold); color:var(--sun-gold);}
   main{flex:1; min-height:0; display:flex; flex-direction:column;}
-  .tabs{display:flex; border-bottom:1px solid var(--line); flex-shrink:0; background:rgba(10,10,18,0.55);}
+  .tabs{
+    display:flex; gap:0; border-bottom:1px solid var(--line); flex-shrink:0;
+    background:rgba(10,10,18,0.72); overflow-x:auto; -webkit-overflow-scrolling:touch;
+  }
   .tab{
-    flex:1; background:none; border:none; color:var(--parchment-dim);
-    padding:11px 4px; font-size:11px; font-weight:600; letter-spacing:0.08em;
-    text-transform:uppercase; border-bottom:2px solid transparent;
+    flex:0 0 auto; background:none; border:none; color:var(--parchment-dim);
+    padding:12px 14px; font-size:12px; font-weight:600; letter-spacing:0.06em;
+    text-transform:uppercase; border-bottom:2px solid transparent; white-space:nowrap;
   }
   .tab.on{color:var(--sun-gold); border-bottom-color:var(--sun-gold);}
   .panel{display:none; flex-direction:column; min-height:0; flex:1;}
@@ -116,11 +125,21 @@
   }
   .word:hover{border-color:var(--sun-gold); color:var(--sun-gold);}
   .speak{margin-left:8px; vertical-align:middle;}
+  .ref{margin-top:18px; padding-top:14px; border-top:1px solid var(--line);}
+  .ref-name{font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--sun-gold); margin-bottom:8px;}
+  a.link{display:inline-block; margin-top:10px; text-decoration:none;}
+  .modes{display:flex; gap:8px; margin-bottom:16px;}
+  .mode{
+    background:var(--void-2); border:1px solid var(--line); color:var(--parchment-dim);
+    border-radius:99px; padding:7px 12px; font-size:13px; font-weight:600;
+  }
+  .mode.on{color:var(--void); background:var(--sun-gold); border-color:var(--sun-gold);}
+  .gem-total{font-family:'Cinzel',serif; font-size:42px; color:var(--sun-gold); margin:8px 0 14px;}
+  .gem-row{display:flex; justify-content:space-between; max-width:220px; padding:6px 0; border-bottom:1px solid var(--line); font-size:15px;}
   @media (min-width:980px){
     main{display:grid; grid-template-columns:minmax(0,1.15fr) minmax(340px,0.85fr);}
     #panel-pad{display:flex; border-right:1px solid var(--line);}
     .tools{display:flex;}
-    .tab.only-narrow{display:none;}
   }
   @media (max-width:979px){
     body{height:100dvh;}
@@ -130,6 +149,7 @@
 </head>
 <body>
 <header>
+  <button class="back" id="back" type="button" hidden>Back</button>
   <svg class="glyph" viewBox="0 0 40 40" fill="none" aria-hidden="true">
     <circle cx="14" cy="20" r="10" stroke="#e8a33d" stroke-width="1.4"/>
     <circle cx="26" cy="20" r="10" stroke="#7dd3e0" stroke-width="1.4"/>
@@ -146,24 +166,28 @@
   <div id="suggest" hidden></div>
 </div>
 <div class="favs" id="favs"></div>
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-panel="pad" type="button">Notepad</button>
+  <button class="tab" data-panel="dict" type="button">Dictionary</button>
+  <button class="tab" data-panel="thes" type="button">Thesaurus</button>
+  <button class="tab" data-panel="rhyme" type="button">Rhymer</button>
+  <button class="tab" data-panel="refs" type="button">References</button>
+  <button class="tab" data-panel="gem" type="button">Gematria</button>
+</nav>
 <main>
   <section class="panel on" id="panel-pad">
-    <textarea id="pad" placeholder="Write here. Select a word to look it up in the other panels."></textarea>
+    <textarea id="pad" placeholder="Write here. There is no word limit. Select a word to look it up, then use the tabs or Back."></textarea>
     <div class="pad-bar">
-      <span id="counts">0 words · 0 characters</span>
+      <span id="counts">0 words · no word limit</span>
       <button class="ghost" id="read" type="button">Read aloud</button>
     </div>
   </section>
   <section class="tools" id="tools">
-    <nav class="tabs" id="tabs">
-      <button class="tab only-narrow" data-panel="pad" type="button">Notepad</button>
-      <button class="tab on" data-panel="dict" type="button">Dictionary</button>
-      <button class="tab" data-panel="thes" type="button">Thesaurus</button>
-      <button class="tab" data-panel="rhyme" type="button">Rhymer</button>
-    </nav>
-    <section class="panel on" id="panel-dict"><div class="scroll" id="dict"></div></section>
+    <section class="panel" id="panel-dict"><div class="scroll" id="dict"></div></section>
     <section class="panel" id="panel-thes"><div class="scroll" id="thes"></div></section>
     <section class="panel" id="panel-rhyme"><div class="scroll" id="rhyme"></div></section>
+    <section class="panel" id="panel-refs"><div class="scroll" id="refs"></div></section>
+    <section class="panel" id="panel-gem"><div class="scroll" id="gem"></div></section>
   </section>
 </main>
 <script src="lexicon.js"></script>
@@ -178,20 +202,55 @@
   var sugIndex = -1;
   var rhymeMap = null;
   var saveTimer = 0;
+  function db(){
+    if(db.promise) return db.promise;
+    db.promise = new Promise(function(resolve, reject){
+      if(!window.indexedDB){ reject(new Error('no')); return; }
+      var req = indexedDB.open('elohim-notepen', 1);
+      req.onupgradeneeded = function(){ req.result.createObjectStore('kv'); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+    return db.promise;
+  }
+  function idbSet(key, val){
+    return db().then(function(d){
+      return new Promise(function(resolve){
+        var tx = d.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(val, key);
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ resolve(); };
+      });
+    }).catch(function(){});
+  }
+  function idbGet(key){
+    return db().then(function(d){
+      return new Promise(function(resolve){
+        var rq = d.transaction('kv').objectStore('kv').get(key);
+        rq.onsuccess = function(){ resolve(rq.result); };
+        rq.onerror = function(){ resolve(undefined); };
+      });
+    }).catch(function(){ return undefined; });
+  }
 
   function wide(){ return window.innerWidth >= 980; }
 
   function showPanel(name){
-    if(wide() && name === 'pad') name = 'dict';
-    panel = name;
+    panel = name || 'pad';
     var tabs = document.querySelectorAll('.tab');
-    for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-panel') === name);
-    $('panel-pad').classList.toggle('on', !wide() && name === 'pad');
-    $('tools').classList.toggle('on', wide() || name !== 'pad');
-    $('panel-dict').classList.toggle('on', name === 'dict');
-    $('panel-thes').classList.toggle('on', name === 'thes');
-    $('panel-rhyme').classList.toggle('on', name === 'rhyme');
-    try{ localStorage.setItem('notepen-panel', name); }catch(e){}
+    for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-panel') === panel);
+    var ids = ['pad','dict','thes','rhyme','refs','gem'];
+    for(var j=0;j<ids.length;j++){
+      var el = $('panel-' + ids[j]);
+      if(!el) continue;
+      var on = ids[j] === panel || (wide() && ids[j] === 'pad');
+      el.classList.toggle('on', on);
+    }
+    $('tools').classList.toggle('on', wide() || panel !== 'pad');
+    $('back').hidden = panel === 'pad';
+    try{ localStorage.setItem('notepen-panel', panel); }catch(e){}
+    if(panel === 'refs') loadRefs();
+    if(panel === 'gem') renderGem();
   }
 
   function lowerBound(prefix){
@@ -267,7 +326,9 @@
   }
 
   function esc(s){
-    return String(s).replace(/[&<>]/g, function(c){ return {'&':'&','<':'<','>':'>'}[c]; });
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
   }
   function wordButton(word){
     return '<button class="word" type="button" data-word="'+esc(word)+'">'+esc(word)+'</button>';
@@ -369,6 +430,102 @@
     el.innerHTML = html;
   }
 
+  var refToken = 0;
+  var gemMode = 'simple';
+  try{ gemMode = localStorage.getItem('notepen-gem') || 'simple'; }catch(e){}
+  var HEB_LATIN = {a:1,b:2,c:3,d:4,e:5,f:6,g:7,h:8,i:9,j:10,k:20,l:30,m:40,n:50,o:60,p:70,q:100,r:200,s:300,t:400,u:6,v:6,w:6,x:60,y:10,z:7};
+  var HEB = {'\u05d0':1,'\u05d1':2,'\u05d2':3,'\u05d3':4,'\u05d4':5,'\u05d5':6,'\u05d6':7,'\u05d7':8,'\u05d8':9,'\u05d9':10,'\u05db':20,'\u05da':20,'\u05dc':30,'\u05de':40,'\u05dd':40,'\u05e0':50,'\u05df':50,'\u05e1':60,'\u05e2':70,'\u05e4':80,'\u05e3':80,'\u05e6':90,'\u05e5':90,'\u05e7':100,'\u05e8':200,'\u05e9':300,'\u05ea':400};
+
+  function wikiTitle(word){
+    return String(word).split(/[\s\-]+/).map(function(p){
+      return p ? p.charAt(0).toUpperCase() + p.slice(1) : '';
+    }).join('_');
+  }
+  function remote(url){
+    if(window.Notepen && window.Notepen.fetch){
+      return Promise.resolve(window.Notepen.fetch(url)).then(function(body){
+        if(!body) throw new Error('empty');
+        return body;
+      });
+    }
+    return fetch(url).then(function(r){
+      if(!r.ok) throw new Error('status');
+      return r.text();
+    });
+  }
+  function decodeEntities(s){
+    var t = document.createElement('textarea');
+    t.innerHTML = s;
+    return t.value;
+  }
+  function loadRefs(){
+    var word = current;
+    var box = $('refs');
+    if(!word){ empty(box, 'Look up a word. Wikipedia and Grokipedia show a short line and a link.'); return; }
+    var title = wikiTitle(word);
+    var wikiUrl = 'https://en.wikipedia.org/wiki/' + encodeURIComponent(title);
+    var grokUrl = 'https://grokipedia.com/page/' + encodeURIComponent(title);
+    box.innerHTML = '<div class="headword">'+esc(word)+'</div>'
+      + '<div class="ref"><div class="ref-name">Wikipedia</div><p class="def" id="wikiText">Loading a short definition…</p><a class="ghost link" id="wikiLink" href="'+esc(wikiUrl)+'" target="_blank" rel="noopener">Open Wikipedia</a></div>'
+      + '<div class="ref"><div class="ref-name">Grokipedia</div><p class="def" id="grokText">Loading a short definition…</p><a class="ghost link" id="grokLink" href="'+esc(grokUrl)+'" target="_blank" rel="noopener">Open Grokipedia</a></div>';
+    var token = ++refToken;
+    remote('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title)).then(function(text){
+      if(token !== refToken) return;
+      var data = JSON.parse(text);
+      var el = $('wikiText');
+      if(el) el.textContent = data.extract || 'No short definition. The article link is below.';
+      if(data.content_urls && data.content_urls.desktop && data.content_urls.desktop.page && $('wikiLink')){
+        $('wikiLink').href = data.content_urls.desktop.page;
+      }
+    }).catch(function(){
+      if(token !== refToken) return;
+      if($('wikiText')) $('wikiText').textContent = 'Could not load the short definition. The article link still opens.';
+    });
+    remote(grokUrl).then(function(html){
+      if(token !== refToken) return;
+      var m = /name="description" content="([^"]*)"/.exec(html);
+      if($('grokText')) $('grokText').textContent = m ? decodeEntities(m[1]) : 'No short line on that page. The article link still opens.';
+    }).catch(function(){
+      if(token !== refToken) return;
+      if($('grokText')) $('grokText').textContent = 'Open the article for the full Grokipedia page. This browser cannot read the short line directly.';
+    });
+  }
+  function gemValue(ch, mode){
+    if(mode === 'hebrew'){
+      if(HEB[ch] != null) return HEB[ch];
+      var low = ch.toLowerCase();
+      if(HEB_LATIN[low] != null) return HEB_LATIN[low];
+      return null;
+    }
+    var low = ch.toLowerCase();
+    if(low < 'a' || low > 'z') return null;
+    var n = low.charCodeAt(0) - 96;
+    return mode === 'english' ? n * 6 : n;
+  }
+  function renderGem(){
+    var el = $('gem');
+    var text = current || '';
+    var html = '<div class="modes" id="gemModes">'
+      + '<button type="button" class="mode'+(gemMode==='simple'?' on':'')+'" data-gem="simple">Simple</button>'
+      + '<button type="button" class="mode'+(gemMode==='english'?' on':'')+'" data-gem="english">English</button>'
+      + '<button type="button" class="mode'+(gemMode==='hebrew'?' on':'')+'" data-gem="hebrew">Hebrew</button>'
+      + '</div>';
+    if(!text){
+      html += '<p class="muted">Type a word. Simple is A=1 through Z=26. English multiplies that by 6. Hebrew uses the classic letter values.</p>';
+      el.innerHTML = html;
+      return;
+    }
+    var total = 0, rows = '', i;
+    for(i=0;i<text.length;i++){
+      var v = gemValue(text.charAt(i), gemMode);
+      if(v == null) continue;
+      total += v;
+      rows += '<div class="gem-row"><span>'+esc(text.charAt(i).toUpperCase())+'</span><span>'+v+'</span></div>';
+    }
+    html += '<div class="headword">'+esc(text)+'</div><div class="gem-total">'+total+'</div><div>'+rows+'</div>';
+    el.innerHTML = html;
+  }
+
   function lookup(word, reveal){
     word = String(word || '').toLowerCase().trim();
     if(!word) return;
@@ -379,6 +536,8 @@
     renderDict();
     renderThes();
     renderRhyme();
+    renderGem();
+    if(panel === 'refs') loadRefs();
     try{ localStorage.setItem('notepen-word', word); }catch(e){}
     if(reveal && panel === 'pad') showPanel('dict');
   }
@@ -391,7 +550,7 @@
   function counts(){
     var t = pad.value;
     var words = (t.match(/[A-Za-z0-9']+/g) || []).length;
-    $('counts').textContent = words + (words === 1 ? ' word' : ' words') + ' · ' + t.length + ' characters';
+    $('counts').textContent = words + (words === 1 ? ' word' : ' words') + ' · no word limit';
   }
 
   if(!LEX || !LEX.w){
@@ -404,14 +563,18 @@
   try{ pad.value = localStorage.getItem('notepen-text') || ''; }catch(e){}
   counts();
   renderFavs();
-  var savedPanel = 'dict';
-  try{ savedPanel = localStorage.getItem('notepen-panel') || 'dict'; }catch(e){}
-  showPanel(savedPanel === 'pad' && wide() ? 'dict' : savedPanel);
+  showPanel('pad');
   try{
     var last = localStorage.getItem('notepen-word');
     if(last) lookup(last, false);
-    else { renderDict(); renderThes(); renderRhyme(); }
+    else { renderDict(); renderThes(); renderRhyme(); renderGem(); }
   }catch(e){}
+  idbGet('note').then(function(saved){
+    if(typeof saved === 'string' && saved.length >= pad.value.length){
+      pad.value = saved;
+      counts();
+    }
+  });
 
   q.addEventListener('input', function(){ sugIndex = -1; paintSuggest(); });
   q.addEventListener('focus', paintSuggest);
@@ -457,7 +620,9 @@
     counts();
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function(){
-      try{ localStorage.setItem('notepen-text', pad.value); }catch(e){}
+      var text = pad.value;
+      try{ localStorage.setItem('notepen-text', text); }catch(e){}
+      idbSet('note', text);
     }, 300);
   });
   pad.addEventListener('pointerup', function(){
@@ -472,11 +637,20 @@
     u.rate = 0.95;
     speechSynthesis.speak(u);
   });
-  window.addEventListener('resize', function(){
-    if(wide() && panel === 'pad') showPanel('dict');
-    else showPanel(panel);
+  window.addEventListener('resize', function(){ showPanel(panel); });
+  $('back').addEventListener('click', function(){ showPanel('pad'); pad.focus(); });
+  $('gem').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-gem]') : null;
+    if(!b) return;
+    gemMode = b.getAttribute('data-gem');
+    try{ localStorage.setItem('notepen-gem', gemMode); }catch(err){}
+    renderGem();
   });
 
+  window.notepenBack = function(){
+    if(panel !== 'pad'){ showPanel('pad'); return true; }
+    return false;
+  };
   if(location.protocol === 'http:' || location.protocol === 'https:'){
     if('serviceWorker' in navigator){
       navigator.serviceWorker.register('sw.js', {scope: './'}).catch(function(){});
