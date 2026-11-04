@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a120e">
+<link rel="manifest" href="manifest.json">
+<title>ELOHIM 777 GALLERY</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Outfit:wght@380;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1a120e; --bg2:#2a1b15; --card:#3a241c; --ink:#f6e7db; --muted:#c8aa96;
+    --accent:#e38b4f; --blue:#8ec6e6; --line:rgba(243,215,194,.16); --danger:#e07a68;
+  }
+  body.night{
+    --bg:#07090d; --bg2:#10161e; --card:#18222c; --ink:#e7eef6; --muted:#8ea0b3;
+    --accent:#8ec6e6; --blue:#d7e6f2; --line:rgba(142,198,230,.16);
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--ink); font-family:Outfit,sans-serif;
+    height:100dvh; display:flex; flex-direction:column; overflow:hidden;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.22;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'><g fill='none' stroke='%238ec6e6' stroke-width='1.1'><circle cx='40' cy='46' r='10'/><path d='M40 56c-8 16-6 28 0 40 6-12 8-24 0-40M30 44c-14 2-18 12-16 20M50 44c14 2 18 12 16 20'/><path d='M150 140c10-18 28-22 40-16-16 6-28 10-40 16z'/><circle cx='168' cy='128' r='7'/><path d='M168 136c6 14 4 24 0 32'/></g><g fill='none' stroke='%23e38b4f' stroke-width='1'><path d='M90 20c8 10 8 22 0 32-8-10-8-22 0-32z'/><circle cx='90' cy='16' r='4'/></g></svg>");
+    background-size:220px;
+  }
+  button,input,select{font-family:inherit; color:inherit}
+  button{cursor:pointer; background:none; border:none}
+  header{display:flex; align-items:center; gap:10px; padding:12px 14px 6px; position:relative; z-index:2}
+  h1{font-family:"Cormorant Garamond",serif; font-size:26px; font-weight:600; letter-spacing:.04em}
+  .sub{font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted)}
+  .grow{flex:1}
+  .iconbtn,.night{
+    border:1px solid var(--line); background:var(--bg2); color:var(--ink);
+    border-radius:999px; padding:8px 12px; font-size:13px; font-weight:600;
+  }
+  .night.on{background:var(--accent); color:#1a120e; border-color:var(--accent)}
+  nav.tabs{display:flex; gap:6px; overflow:auto; padding:8px 12px; position:relative; z-index:2}
+  .tab{flex:0 0 auto; padding:8px 12px; border-radius:999px; color:var(--muted); font-size:13px; font-weight:600}
+  .tab.on{background:var(--card); color:var(--accent)}
+  main{flex:1; min-height:0; position:relative; z-index:1}
+  .view{display:none; height:100%; overflow:auto; padding:8px 12px 28px}
+  .view.on{display:block}
+  .grid{display:grid; gap:8px}
+  .grid.g2{grid-template-columns:repeat(2,1fr)}
+  .grid.g3{grid-template-columns:repeat(3,1fr)}
+  .grid.g4{grid-template-columns:repeat(4,1fr)}
+  .tile{position:relative; background:var(--card); border-radius:8px; overflow:hidden; min-height:0; text-align:left}
+  .tile img,.tile video{width:100%; height:140px; object-fit:cover; display:block; background:#000}
+  .grid.list{display:flex; flex-direction:column}
+  .grid.list .tile{display:flex; align-items:center; gap:10px}
+  .grid.list .tile img,.grid.list .tile video{width:72px; height:72px}
+  .meta{padding:6px 8px; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .badge{position:absolute; left:6px; bottom:28px; background:rgba(0,0,0,.55); color:#fff; font-size:10px; padding:2px 6px; border-radius:99px}
+  .month{margin:14px 2px 8px; color:var(--blue); font-size:13px; letter-spacing:.12em; text-transform:uppercase}
+  .empty{padding:28px 8px; color:var(--muted); line-height:1.5}
+  .row{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0}
+  .ghost{border:1px solid var(--blue); color:var(--blue); border-radius:4px; padding:8px 12px; font-size:13px; font-weight:600}
+  .viewer{position:fixed; inset:0; background:#05070a; z-index:5; display:none; flex-direction:column}
+  .viewer.on{display:flex}
+  .vbar{display:flex; align-items:center; gap:8px; padding:10px 12px; color:#f6e7db}
+  .stage{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden}
+  .stage img,.stage video{max-width:100%; max-height:100%; object-fit:contain}
+  .controls{padding:8px 12px 16px; color:#f6e7db}
+  input[type=range]{width:100%}
+  .sheet{position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:6; display:none}
+  .sheet.on{display:block}
+  .panel{position:absolute; left:0; right:0; bottom:0; max-height:86dvh; overflow:auto; background:var(--bg2); border-radius:16px 16px 0 0; padding:16px}
+  .panel h2{font-family:"Cormorant Garamond",serif; font-size:28px; margin-bottom:8px}
+  .set{padding:12px 0; border-bottom:1px solid var(--line)}
+  .set b{display:block}
+  .set span{color:var(--muted); font-size:13px}
+  select, .field{background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:8px; width:100%}
+  .filters{display:flex; gap:8px; overflow:auto}
+  .chip{border:1px solid var(--line); border-radius:99px; padding:6px 10px; font-size:12px; white-space:nowrap}
+  .chip.on{background:var(--accent); color:#1a120e}
+  canvas.edit{max-width:100%; background:#000}
+  .grouptitle{color:var(--accent); font-size:12px; letter-spacing:.16em; text-transform:uppercase; margin:16px 0 6px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>ELOHIM 777</h1>
+    <div class="sub">Gallery</div>
+  </div>
+  <div class="grow"></div>
+  <button class="night" id="night" type="button">Night</button>
+  <button class="iconbtn" id="viewMode" type="button">List</button>
+</header>
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-view="photos" type="button">Photos</button>
+  <button class="tab" data-view="videos" type="button">Videos</button>
+  <button class="tab" data-view="albums" type="button">Albums</button>
+  <button class="tab" data-view="status" type="button">Status</button>
+  <button class="tab" data-view="settings" type="button">Settings</button>
+</nav>
+<main>
+  <section class="view on" id="photos"></section>
+  <section class="view" id="videos"></section>
+  <section class="view" id="albums"></section>
+  <section class="view" id="status"></section>
+  <section class="view" id="settings"></section>
+</main>
+<div class="viewer" id="viewer">
+  <div class="vbar">
+    <button class="ghost" id="closeView" type="button">Back</button>
+    <div class="grow" id="vtitle"></div>
+    <button class="ghost" id="editBtn" type="button">Edit</button>
+  </div>
+  <div class="stage" id="stage"></div>
+  <div class="controls" id="vcontrols"></div>
+</div>
+<div class="sheet" id="sheet"><div class="panel" id="sheetBody"></div></div>
+<input id="pick" type="file" accept="image/*,video/*,.nef,.cr2,.arw,.dng,.orf,.raf,.rw2,.nrw,.tiff,.tif,.heic,.mkv,.mov,.3gp,.avi,.webm,.mp4" multiple hidden>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var native = window.GalleryNative || null;
+  var items = [];
+  var statuses = [];
+  var saved = [];
+  var settings = {night:false, view:'grid', cols:3, names:true, sort:'modified', group:true, statusTab:'recent'};
+  try{ settings = Object.assign(settings, JSON.parse(localStorage.getItem('gallery-settings') || '{}')); }catch(e){}
+  var album = '';
+  var FILTERS = {
+    none:'none',
+    sunset:'sepia(.35) saturate(1.35) contrast(1.05)',
+    martian:'sepia(.55) hue-rotate(-18deg) saturate(1.4) contrast(1.08)',
+    blue:'saturate(.8) hue-rotate(18deg) contrast(1.05) brightness(1.05)',
+    mono:'grayscale(1) contrast(1.1)',
+    bloom:'brightness(1.12) saturate(1.15) contrast(.95)',
+    fade:'contrast(.9) saturate(.75) brightness(1.05)'
+  };
+  var RAW = {nef:1,cr2:1,arw:1,dng:1,orf:1,raf:1,rw2:1,nrw:1};
+  var VIDEO_EXT = {mp4:1,m4v:1,webm:1,mkv:1,mov:1,"3gp":1,"3g2":1,avi:1,ts:1,m2ts:1,flv:1,wmv:1,ogv:1,mpeg:1,mpg:1};
+
+  function saveSettings(){ try{ localStorage.setItem('gallery-settings', JSON.stringify(settings)); }catch(e){} }
+  function applyNight(){
+    document.body.classList.toggle('night', !!settings.night);
+    $('night').classList.toggle('on', !!settings.night);
+    $('night').textContent = settings.night ? 'Night on' : 'Night';
+    var meta = document.querySelector('meta[name=theme-color]');
+    if(meta) meta.setAttribute('content', settings.night ? '#07090d' : '#1a120e');
+  }
+  function extOf(name){ var m = String(name).toLowerCase().match(/\.([a-z0-9]+)$/); return m ? m[1] : ''; }
+  function kindOf(name, mime){
+    var e = extOf(name);
+    if(RAW[e]) return 'raw';
+    if(VIDEO_EXT[e] || (mime && mime.indexOf('video') === 0)) return 'video';
+    return 'image';
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function monthOf(ms){
+    var d = new Date(ms || Date.now());
+    return d.toLocaleString(undefined, {month:'long', year:'numeric'});
+  }
+  function sorted(list){
+    var arr = list.slice();
+    arr.sort(function(a,b){
+      if(settings.sort === 'name') return a.name.localeCompare(b.name);
+      if(settings.sort === 'size') return (b.size||0) - (a.size||0);
+      return (b.date||0) - (a.date||0);
+    });
+    return arr;
+  }
+  function srcOf(item){
+    if(item.blobUrl) return item.blobUrl;
+    return 'media/' + encodeURIComponent(item.id);
+  }
+  function showView(name){
+    var tabs = document.querySelectorAll('.tab');
+    for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle('on', tabs[i].getAttribute('data-view') === name);
+    ['photos','videos','albums','status','settings'].forEach(function(id){
+      $(id).classList.toggle('on', id === name);
+    });
+  }
+  function tile(item){
+    var el = document.createElement('button');
+    el.className = 'tile';
+    el.type = 'button';
+    var media = document.createElement(item.kind === 'video' ? 'video' : 'img');
+    media.src = srcOf(item);
+    if(item.kind === 'video') media.muted = true;
+    el.appendChild(media);
+    if(item.kind !== 'image'){
+      var b = document.createElement('span');
+      b.className = 'badge';
+      b.textContent = item.kind === 'video' ? (item.duration ? fmt(item.duration) : 'Video') : 'RAW';
+      el.appendChild(b);
+    }
+    if(settings.names){
+      var m = document.createElement('div');
+      m.className = 'meta';
+      m.textContent = item.name;
+      el.appendChild(m);
+    }
+    el.addEventListener('click', function(){ openItem(item); });
+    return el;
+  }
+  function fmt(sec){
+    sec = Math.floor(sec || 0);
+    var m = Math.floor(sec/60), s = sec%60;
+    return m + ':' + (s<10?'0':'') + s;
+  }
+  function paintGrid(host, list){
+    host.innerHTML = '';
+    if(!list.length){
+      host.innerHTML = '<div class="empty">Nothing here yet. Open photos and videos, or scan the phone library. WhatsApp statuses appear under Status once storage is allowed.</div>';
+      return;
+    }
+    var grid = document.createElement('div');
+    grid.className = 'grid ' + (settings.view === 'list' ? 'list' : ('g'+settings.cols));
+    var last = '';
+    list.forEach(function(item){
+      if(settings.group && settings.view !== 'list'){
+        var label = monthOf(item.date);
+        if(label !== last){
+          if(grid.children.length) host.appendChild(grid);
+          var h = document.createElement('div');
+          h.className = 'month';
+          h.textContent = label;
+          host.appendChild(h);
+          grid = document.createElement('div');
+          grid.className = 'grid g'+settings.cols;
+          last = label;
+        }
+      }
+      grid.appendChild(tile(item));
+    });
+    host.appendChild(grid);
+  }
+  function render(){
+    var photos = sorted(items.filter(function(i){ return i.kind !== 'video'; }));
+    var videos = sorted(items.filter(function(i){ return i.kind === 'video'; }));
+    if(album){
+      photos = photos.filter(function(i){ return i.folder === album; });
+      videos = videos.filter(function(i){ return i.folder === album; });
+    }
+    paintGrid($('photos'), photos);
+    paintGrid($('videos'), videos);
+    renderAlbums();
+    renderStatus();
+    renderSettings();
+    $('viewMode').textContent = settings.view === 'grid' ? 'List' : 'Grid';
+  }
+  function renderAlbums(){
+    var host = $('albums');
+    host.innerHTML = '';
+    if(album){
+      var back = document.createElement('button');
+      back.className = 'ghost';
+      back.textContent = 'All albums';
+      back.addEventListener('click', function(){ album = ''; render(); });
+      host.appendChild(back);
+    }
+    var counts = {};
+    items.forEach(function(i){ var f = i.folder || 'Library'; counts[f] = (counts[f]||0)+1; });
+    var names = Object.keys(counts).sort();
+    if(!names.length){ host.innerHTML += '<div class="empty">Albums appear after a scan or after you open a folder.</div>'; return; }
+    var grid = document.createElement('div');
+    grid.className = 'grid g2';
+    names.forEach(function(name){
+      var b = document.createElement('button');
+      b.className = 'tile';
+      b.type = 'button';
+      b.innerHTML = '<div class="meta" style="font-size:16px;color:var(--ink);padding:18px 10px">'+esc(name)+'<br><span style="color:var(--muted)">'+counts[name]+'</span></div>';
+      b.addEventListener('click', function(){ album = name; showView('photos'); render(); });
+      grid.appendChild(b);
+    });
+    host.appendChild(grid);
+  }
+  function renderStatus(){
+    var host = $('status');
+    var recentOn = settings.statusTab !== 'saved';
+    host.innerHTML = '<div class="row"><button class="tab '+(recentOn?'on':'')+'" id="stRecent" type="button">Recent status</button><button class="tab '+(!recentOn?'on':'')+'" id="stSaved" type="button">Saved status</button><button class="ghost" id="scanStatus" type="button">Scan WhatsApp</button></div>';
+    var list = recentOn ? statuses : saved;
+    var box = document.createElement('div');
+    host.appendChild(box);
+    if(!list.length){
+      box.innerHTML = '<div class="empty">Recent statuses are the photos and videos WhatsApp has not saved yet. On the phone app this folder is scanned automatically. Saved copies stay in Elohim 777 even after WhatsApp clears them.</div>';
+    } else paintGrid(box, sorted(list));
+    $('stRecent').onclick = function(){ settings.statusTab = 'recent'; saveSettings(); renderStatus(); };
+    $('stSaved').onclick = function(){ settings.statusTab = 'saved'; saveSettings(); renderStatus(); };
+    $('scanStatus').onclick = scanAll;
+  }
+  function renderSettings(){
+    var host = $('settings');
+    host.innerHTML = ''
+      + '<div class="grouptitle">Look</div>'
+      + '<div class="set"><b>Night mode</b><span>Darker blue night. The Night button in the header does the same.</span><div class="row"><button class="ghost" id="setNight" type="button">'+(settings.night?'Turn night off':'Turn night on')+'</button></div></div>'
+      + '<div class="set"><b>Columns</b><span>How many photos across the grid.</span><select id="cols"><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>'
+      + '<div class="set"><b>File names</b><span>Show names under thumbnails.</span><select id="names"><option value="1">Show</option><option value="0">Hide</option></select></div>'
+      + '<div class="set"><b>Sort</b><select id="sort"><option value="modified">Modified</option><option value="name">Name</option><option value="size">Size</option></select></div>'
+      + '<div class="set"><b>Group by month</b><select id="group"><option value="1">Yes</option><option value="0">No</option></select></div>'
+      + '<div class="grouptitle">Library</div>'
+      + '<div class="set"><b>Scan storage</b><span>Photos, videos, and camera raw files including NEF, CR2, ARW, and DNG.</span><div class="row"><button class="ghost" id="doScan" type="button">Scan</button><button class="ghost" id="doOpen" type="button">Open files</button><button class="ghost" id="doFolder" type="button">Open folder</button></div></div>'
+      + '<div class="set"><b>WhatsApp status</b><span>The phone app reads WhatsApp and WhatsApp Business status folders and can keep a copy.</span></div>'
+      + '<div class="grouptitle">Player and edit</div>'
+      + '<div class="set"><b>Video</b><span>On the phone, video opens in the built-in player so mp4, mkv, 3gp, mov, webm, and the rest of the device codecs actually play. Crop, resize, and filters are in Edit.</span></div>'
+      + '<div class="set"><b>Send out</b><span>Edited photos can go to Adobe Lightroom or Picsart.</span></div>'
+      + '<div class="grouptitle">Codecs</div>'
+      + '<div class="set"><span>Video: mp4, m4v, webm, mkv, mov, 3gp, avi, mpeg, ts, flv, wmv. Image: jpg, png, webp, gif, heic, tiff, bmp. Raw: nef, cr2, arw, dng, orf, raf, rw2. Raw files use the camera JPEG stored inside the file.</span></div>';
+    $('cols').value = String(settings.cols);
+    $('names').value = settings.names ? '1' : '0';
+    $('sort').value = settings.sort;
+    $('group').value = settings.group ? '1' : '0';
+    $('setNight').onclick = function(){ settings.night = !settings.night; saveSettings(); applyNight(); renderSettings(); };
+    $('cols').onchange = function(){ settings.cols = Number(this.value); saveSettings(); render(); };
+    $('names').onchange = function(){ settings.names = this.value === '1'; saveSettings(); render(); };
+    $('sort').onchange = function(){ settings.sort = this.value; saveSettings(); render(); };
+    $('group').onchange = function(){ settings.group = this.value === '1'; saveSettings(); render(); };
+    $('doScan').onclick = scanAll;
+    $('doOpen').onclick = function(){ $('pick').removeAttribute('webkitdirectory'); $('pick').click(); };
+    $('doFolder').onclick = function(){ $('pick').setAttribute('webkitdirectory',''); $('pick').click(); };
+  }
+
+  function openItem(item){
+    $('viewer').classList.add('on');
+    $('vtitle').textContent = item.name;
+    var stage = $('stage');
+    var controls = $('vcontrols');
+    stage.innerHTML = '';
+    controls.innerHTML = '';
+    $('editBtn').style.display = item.kind === 'video' ? 'none' : 'inline-block';
+    $('editBtn').onclick = function(){ editImage(item); };
+    if(native && native.saveStatus){
+      var keep = document.createElement('button');
+      keep.className = 'ghost';
+      keep.type = 'button';
+      keep.textContent = 'Save';
+      keep.onclick = function(){ native.saveStatus(item.id); scanAll(); };
+      $('vtitle').after ? $('vtitle').after(keep) : $('vtitle').parentNode.appendChild(keep);
+    }
+    if(item.kind === 'video' && native && native.play){
+      native.play(item.id);
+      controls.innerHTML = '<div class="empty">Playing in the gallery player. Use the player controls for pause, seek, and fullscreen. Back returns here.</div>';
+      return;
+    }
+    if(item.kind === 'video'){
+      var v = document.createElement('video');
+      v.src = srcOf(item);
+      v.controls = false;
+      v.playsInline = true;
+      v.style.filter = FILTERS.none;
+      stage.appendChild(v);
+      controls.innerHTML = '<input id="seek" type="range" min="0" max="1000" value="0"><div class="row"><button class="ghost" id="play" type="button">Play</button><span id="time">0:00</span><select id="speed"><option>0.5</option><option selected>1</option><option>1.25</option><option>1.5</option><option>2</option></select></div><div class="filters" id="vfilters"></div><div class="row"><button class="ghost" id="full" type="button">Fullscreen</button></div>';
+      Object.keys(FILTERS).forEach(function(name){
+        var b = document.createElement('button');
+        b.className = 'chip' + (name==='none'?' on':'');
+        b.textContent = name;
+        b.type = 'button';
+        b.onclick = function(){
+          v.style.filter = FILTERS[name];
+          var chips = $('vfilters').children;
+          for(var i=0;i<chips.length;i++) chips[i].classList.toggle('on', chips[i]===b);
+        };
+        $('vfilters').appendChild(b);
+      });
+      $('play').onclick = function(){ if(v.paused) v.play(); else v.pause(); };
+      v.addEventListener('timeupdate', function(){
+        if(!v.duration) return;
+        $('seek').value = Math.round(1000 * v.currentTime / v.duration);
+        $('time').textContent = fmt(v.currentTime) + ' / ' + fmt(v.duration);
+      });
+      $('seek').oninput = function(){ if(v.duration) v.currentTime = v.duration * (this.value/1000); };
+      $('speed').onchange = function(){ v.playbackRate = Number(this.value); };
+      $('full').onclick = function(){ if(v.requestFullscreen) v.requestFullscreen(); };
+      v.play().catch(function(){});
+      v.addEventListener('error', function(){
+        controls.insertAdjacentHTML('beforeend', '<div class="empty">This codec did not start in the browser. The phone and Windows apps play it in their own player.</div>');
+      });
+      return;
+    }
+    var img = document.createElement('img');
+    img.src = srcOf(item);
+    img.alt = item.name;
+    stage.appendChild(img);
+    controls.innerHTML = '<div class="row"><button class="ghost" id="toLightroom" type="button">Lightroom</button><button class="ghost" id="toPicsart" type="button">Picsart</button><button class="ghost" id="shareAny" type="button">Share</button></div>';
+    $('toLightroom').onclick = function(){ send(item, 'lightroom'); };
+    $('toPicsart').onclick = function(){ send(item, 'picsart'); };
+    $('shareAny').onclick = function(){ send(item, 'share'); };
+  }
+
+  function send(item, target){
+    if(native && native.share){ native.share(item.id, target); return; }
+    var url = target === 'lightroom' ? 'https://lightroom.adobe.com/' : (target === 'picsart' ? 'https://picsart.com/create' : '');
+    if(url) window.open(url, '_blank', 'noopener');
+    else if(navigator.share && item.file) navigator.share({files:[item.file], title:item.name}).catch(function(){});
+  }
+
+  function editImage(item){
+    var img = new Image();
+    img.onload = function(){
+      var filter = 'none';
+      var crop = {x:0, y:0, w:1, h:1};
+      var maxEdge = Math.min(2048, Math.max(img.naturalWidth, img.naturalHeight));
+      $('sheet').classList.add('on');
+      $('sheetBody').innerHTML = '<h2>Edit</h2><canvas class="edit" id="cv"></canvas><div class="filters" id="ff"></div>'
+        + '<div class="set"><b>Crop left</b><input id="cx" type="range" min="0" max="80" value="0"></div>'
+        + '<div class="set"><b>Crop top</b><input id="cy" type="range" min="0" max="80" value="0"></div>'
+        + '<div class="set"><b>Crop width</b><input id="cw" type="range" min="20" max="100" value="100"></div>'
+        + '<div class="set"><b>Crop height</b><input id="ch" type="range" min="20" max="100" value="100"></div>'
+        + '<div class="set"><b>Resize longest side</b><input id="rs" type="range" min="480" max="4096" value="'+maxEdge+'"></div>'
+        + '<div class="row"><button class="ghost" id="saveEdit" type="button">Save photo</button><button class="ghost" id="closeEdit" type="button">Close</button></div>';
+      function draw(){
+        var sx = Math.round(img.naturalWidth * ($('cx').value/100));
+        var sy = Math.round(img.naturalHeight * ($('cy').value/100));
+        var sw = Math.round(img.naturalWidth * ($('cw').value/100));
+        var sh = Math.round(img.naturalHeight * ($('ch').value/100));
+        if(sx+sw > img.naturalWidth) sw = img.naturalWidth - sx;
+        if(sy+sh > img.naturalHeight) sh = img.naturalHeight - sy;
+        var edge = Number($('rs').value);
+        var scale = edge / Math.max(sw, sh);
+        var dw = Math.max(1, Math.round(sw * Math.min(scale, 1)));
+        var dh = Math.max(1, Math.round(sh * Math.min(scale, 1)));
+        var cv = $('cv');
+        cv.width = dw; cv.height = dh;
+        var ctx = cv.getContext('2d');
+        ctx.filter = FILTERS[filter] || 'none';
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+      }
+      Object.keys(FILTERS).forEach(function(name){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip'+(name==='none'?' on':'');
+        b.textContent = name;
+        b.onclick = function(){
+          filter = name; draw();
+          var chips = $('ff').children;
+          for(var i=0;i<chips.length;i++) chips[i].classList.toggle('on', chips[i]===b);
+        };
+        $('ff').appendChild(b);
+      });
+      ['cx','cy','cw','ch','rs'].forEach(function(id){ $(id).oninput = draw; });
+      draw();
+      $('closeEdit').onclick = function(){ $('sheet').classList.remove('on'); };
+      $('saveEdit').onclick = function(){
+        var data = $('cv').toDataURL('image/jpeg', 0.92);
+        if(native && native.saveImage){ native.saveImage(data, item.name.replace(/\.[a-z0-9]+$/i,'') + '-edit.jpg'); }
+        else {
+          var a = document.createElement('a');
+          a.href = data; a.download = 'elohim777-edit.jpg'; a.click();
+        }
+        $('sheet').classList.remove('on');
+      };
+    };
+    img.src = srcOf(item);
+  }
+
+  function take(result){
+    if(!result) return [];
+    if(typeof result === 'string'){ try{ return JSON.parse(result); }catch(e){ return []; } }
+    return result;
+  }
+  function scanAll(){
+    if(!(native && native.scan)){
+      $('pick').click();
+      return;
+    }
+    if(native.requestAccess) native.requestAccess();
+    items = take(native.scan());
+    statuses = native.statuses ? take(native.statuses()) : [];
+    saved = native.savedStatuses ? take(native.savedStatuses()) : [];
+    render();
+    showView('photos');
+  }
+  function addFiles(fileList){
+    var files = Array.prototype.slice.call(fileList || []);
+    var pending = files.length;
+    if(!pending) return;
+    files.forEach(function(file){
+      var item = {
+        id: 'local-' + Math.random().toString(36).slice(2),
+        name: file.name,
+        kind: kindOf(file.name, file.type),
+        mime: file.type || '',
+        folder: (file.webkitRelativePath && file.webkitRelativePath.split('/')[0]) || 'Opened',
+        date: file.lastModified || Date.now(),
+        size: file.size,
+        file: file,
+        blobUrl: URL.createObjectURL(file)
+      };
+      function push(){ items.push(item); pending--; if(!pending){ render(); showView(item.kind==='video'?'videos':'photos'); } }
+      if(item.kind === 'raw'){
+        var reader = new FileReader();
+        reader.onload = function(){
+          var url = nefPreview(reader.result);
+          if(url) item.blobUrl = url;
+          push();
+        };
+        reader.readAsArrayBuffer(file);
+      } else push();
+    });
+  }
+  function nefPreview(buf){
+    var u = new Uint8Array(buf);
+    var start = -1, i;
+    for(i=0;i<u.length-3;i++){
+      if(u[i]===0xff && u[i+1]===0xd8 && u[i+2]===0xff){ start = i; break; }
+    }
+    if(start < 0) return '';
+    var end = -1;
+    for(i=u.length-2;i>start;i--){
+      if(u[i]===0xff && u[i+1]===0xd9){ end = i+2; break; }
+    }
+    if(end < 0) return '';
+    return URL.createObjectURL(new Blob([u.subarray(start, end)], {type:'image/jpeg'}));
+  }
+
+  $('night').onclick = function(){ settings.night = !settings.night; saveSettings(); applyNight(); };
+  $('viewMode').onclick = function(){ settings.view = settings.view === 'grid' ? 'list' : 'grid'; saveSettings(); render(); };
+  $('tabs').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('.tab') : null;
+    if(!b) return;
+    showView(b.getAttribute('data-view'));
+  };
+  $('closeView').onclick = function(){ $('viewer').classList.remove('on'); $('stage').innerHTML = ''; };
+  $('sheet').addEventListener('click', function(e){ if(e.target === $('sheet')) $('sheet').classList.remove('on'); });
+  $('pick').addEventListener('change', function(){ addFiles(this.files); this.value = ''; });
+  applyNight();
+  render();
+  if(native && native.scan) scanAll();
+  if(location.protocol === 'http:' || location.protocol === 'https:'){
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', {scope:'./'}).catch(function(){});
+  }
+  window.galleryBack = function(){
+    if($('sheet').classList.contains('on')){ $('sheet').classList.remove('on'); return true; }
+    if($('viewer').classList.contains('on')){ $('viewer').classList.remove('on'); $('stage').innerHTML=''; return true; }
+    if(album){ album = ''; render(); return true; }
+    return false;
+  };
+})();
+</script>
+</body>
+</html>

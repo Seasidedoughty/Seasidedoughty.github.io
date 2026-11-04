@@ -19,6 +19,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/saf/')) return;
   if (url.pathname.startsWith('/notepen')) return;
+  if (url.pathname.startsWith('/gallery')) return;
   const shell = req.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html');
   if (shell) {
     event.respondWith(
