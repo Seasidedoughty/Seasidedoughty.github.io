@@ -63,6 +63,11 @@
   .load-btn:hover{background:rgba(91,127,214,0.15); box-shadow:0 0 18px rgba(91,127,214,0.25);}
   .load-btn:active{transform:scale(0.98);}
   input[type=file]{display:none;}
+  .load-btn{position:relative;}
+  .load-btn input.file-hit{
+    display:block; position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; cursor:pointer; font-size:16px;
+  }
 
   /* Layout */
   main{flex:1; display:grid; grid-template-columns:380px 1fr; min-height:0;}
@@ -267,17 +272,19 @@
     <div><h1>ELOHIM 777</h1><div class="sub">Twin Suns Player</div></div>
   </div>
   <div class="head-actions">
-    <button class="load-btn" id="pickFolder">
+    <label class="load-btn" id="pickFolder">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
       Load<span class="lbl-long">&nbsp;Folder</span>
-    </button>
-    <button class="load-btn ghost" id="pickFiles">+ Files</button>
+      <input type="file" id="fileInput" class="file-hit" multiple accept="audio/*,.mp3,.wav,.flac,.ogg,.m4a,.aac,.opus,.wma,.aiff,.aif,.ape">
+    </label>
+    <label class="load-btn ghost" id="pickFiles">
+      + Files
+      <input type="file" id="fileInputExtra" class="file-hit" multiple accept="audio/*,.mp3,.wav,.flac,.ogg,.m4a,.aac,.opus,.wma,.aiff,.aif,.ape">
+    </label>
     <button class="load-btn ghost" id="installApp" hidden>Install</button>
     <button class="load-btn ghost" id="widgetBtn" hidden>Widget</button>
     <button class="load-btn ghost" id="piSign">Sign in</button>
     <button class="load-btn ghost" id="openSettings">Settings</button>
-    <input type="file" id="folderInput" webkitdirectory directory multiple>
-    <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.flac,.ogg,.m4a,.aac,.opus,.wma,.aiff,.ape" multiple>
   </div>
 </header>
 
@@ -889,14 +896,16 @@
     return added;
   }
   function addFiles(fileList){
+    if(!fileList || !fileList.length) return;
     const entries = [];
     Array.from(fileList).forEach(f => {
-      if(!(f.type.startsWith('audio/') || AUDIO_RE.test(f.name))) return;
+      const type = f.type || '';
+      if(!(type.startsWith('audio/') || type === 'application/ogg' || AUDIO_RE.test(f.name))) return;
       entries.push({path:f.webkitRelativePath || ('Loose files/' + f.name), name:f.name, file:f, url:null, blob:f});
     });
     entries.forEach(en => { if(!byPath.has(en.path)) en.url = URL.createObjectURL(en.blob); });
     const n = ingest(entries);
-    toast(n ? 'Loaded ' + plural(n, 'track') : 'No new audio files found');
+    toast(n ? 'Loaded ' + plural(n, 'track') : 'No audio files in that selection');
   }
 
   // Android app: the native side scans saved folders and calls this with a JSON list
@@ -918,13 +927,24 @@
     const t = byId.get(queue[qpos]);
     try{ window.Android.setPlaying(!audio.paused, t ? t.title : ''); }catch(e){}
   }
-  $('#pickFolder').addEventListener('click', () => {
-    if(NATIVE){ nativePicking = true; window.Android.pickFolder(); }
-    else pickSavedFolder(false);
-  });
-  $('#pickFiles').addEventListener('click', () => $('#fileInput').click());
-  $('#folderInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+  const IN_APP = /Twitter|TwitterAndroid|FBAN|FBAV|Instagram|TikTok|Snapchat|WhatsApp|Line\/|MicroMessenger|; wv|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  const DIR_API = !!(window.showDirectoryPicker && window.isSecureContext && !IN_APP && !/Android|Mobile/i.test(navigator.userAgent || ''));
+  if(IN_APP){
+    ['fileInput','fileInputExtra'].forEach(id => { const el = document.getElementById(id); if(el) el.removeAttribute('accept'); });
+  }
+  if(DIR_API){
+    $('#fileInput').style.pointerEvents = 'none';
+    $('#pickFolder').addEventListener('click', (e) => {
+      e.preventDefault();
+      if(NATIVE){ nativePicking = true; window.Android.pickFolder(); }
+      else pickSavedFolder(false);
+    });
+  }else if(NATIVE){
+    $('#fileInput').style.pointerEvents = 'none';
+    $('#pickFolder').addEventListener('click', (e) => { e.preventDefault(); nativePicking = true; window.Android.pickFolder(); });
+  }
   $('#fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+  $('#fileInputExtra').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
 
   /* ---------- Transport ---------- */
   $('#playBtn').addEventListener('click', () => {
@@ -1108,7 +1128,7 @@
     updateBadge();
   }
   async function pickSavedFolder(rescan){
-    if(!window.showDirectoryPicker){ $('#folderInput').click(); return; }
+    if(!window.showDirectoryPicker){ $('#fileInput').click(); return; }
     try{
       let handle = rescan ? await idbGet('folder') : null;
       if(!handle) handle = await showDirectoryPicker({mode:'read'});
@@ -1121,8 +1141,7 @@
       savePL();
     }catch(err){
       if(err && err.name === 'AbortError') return;
-      if(rescan){ $('#folderInput').click(); return; }
-      toast('Could not open that folder');
+      toast('Could not open that folder. Use + Files to choose the songs.');
     }
   }
   async function bootLibrary(){
@@ -1223,7 +1242,10 @@
   $('#openSettings').addEventListener('click', () => $('#pageSettings').classList.add('on'));
   $('#closeSettings').addEventListener('click', () => $('#pageSettings').classList.remove('on'));
   $('#scanAudio').addEventListener('change', savePL);
-  $('#rescanAudio').addEventListener('click', () => pickSavedFolder(true));
+  $('#rescanAudio').addEventListener('click', () => {
+    if(DIR_API) pickSavedFolder(true);
+    else $('#fileInput').click();
+  });
   bootLibrary();
 })();
 </script>
