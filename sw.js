@@ -1,4 +1,4 @@
-const CACHE = 'elohim777-shell-2';
+const CACHE = 'elohim777-shell-3';
 const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/apple-touch-icon.png', '/privacy.html', '/terms.html'];
 
 self.addEventListener('install', (event) => {
@@ -18,6 +18,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/saf/')) return;
+  if (url.pathname.startsWith('/notepen')) return;
   const shell = req.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html');
   if (shell) {
     event.respondWith(
