@@ -78,7 +78,8 @@
   .chip{border:1px solid var(--line); border-radius:99px; padding:6px 10px; font-size:12px; white-space:nowrap}
   .chip.on{background:var(--accent); color:#1a120e}
   canvas.edit{max-width:100%; background:#000}
-  .grouptitle{color:var(--accent); font-size:12px; letter-spacing:.16em; text-transform:uppercase; margin:16px 0 6px}
+  .ph{height:140px; display:flex; align-items:center; justify-content:center; background:#120c09; color:var(--accent); font-size:28px}
+  .grid.list .ph{width:72px; height:72px; flex:0 0 72px}
 </style>
 </head>
 <body>
@@ -92,16 +93,16 @@
   <button class="iconbtn" id="viewMode" type="button">List</button>
 </header>
 <nav class="tabs" id="tabs">
-  <button class="tab on" data-view="photos" type="button">Photos</button>
+  <button class="tab" data-view="photos" type="button">Photos</button>
   <button class="tab" data-view="videos" type="button">Videos</button>
-  <button class="tab" data-view="albums" type="button">Albums</button>
+  <button class="tab on" data-view="albums" type="button">Albums</button>
   <button class="tab" data-view="status" type="button">Status</button>
   <button class="tab" data-view="settings" type="button">Settings</button>
 </nav>
 <main>
-  <section class="view on" id="photos"></section>
+  <section class="view" id="photos"></section>
   <section class="view" id="videos"></section>
-  <section class="view" id="albums"></section>
+  <section class="view on" id="albums"></section>
   <section class="view" id="status"></section>
   <section class="view" id="settings"></section>
 </main>
@@ -126,6 +127,8 @@
   var settings = {night:false, view:'grid', cols:3, names:true, sort:'modified', group:true, statusTab:'recent'};
   try{ settings = Object.assign(settings, JSON.parse(localStorage.getItem('gallery-settings') || '{}')); }catch(e){}
   var album = '';
+  var viewerList = [];
+  var viewerIndex = 0;
   var FILTERS = {
     none:'none',
     sunset:'sepia(.35) saturate(1.35) contrast(1.05)',
@@ -182,18 +185,27 @@
       $(id).classList.toggle('on', id === name);
     });
   }
-  function tile(item){
+  function tile(item, list, index){
     var el = document.createElement('button');
     el.className = 'tile';
     el.type = 'button';
-    var media = document.createElement(item.kind === 'video' ? 'video' : 'img');
-    media.src = srcOf(item);
-    if(item.kind === 'video') media.muted = true;
-    el.appendChild(media);
+    if(item.kind === 'video'){
+      var ph = document.createElement('div');
+      ph.className = 'ph';
+      ph.textContent = '▶';
+      el.appendChild(ph);
+    } else {
+      var media = document.createElement('img');
+      media.alt = '';
+      media.loading = 'lazy';
+      media.decoding = 'async';
+      media.src = srcOf(item);
+      el.appendChild(media);
+    }
     if(item.kind !== 'image'){
       var b = document.createElement('span');
       b.className = 'badge';
-      b.textContent = item.kind === 'video' ? (item.duration ? fmt(item.duration) : 'Video') : 'RAW';
+      b.textContent = item.kind === 'video' ? 'Video' : 'RAW';
       el.appendChild(b);
     }
     if(settings.names){
@@ -202,7 +214,7 @@
       m.textContent = item.name;
       el.appendChild(m);
     }
-    el.addEventListener('click', function(){ openItem(item); });
+    el.addEventListener('click', function(){ openAt(list, index); });
     return el;
   }
   function fmt(sec){
@@ -217,10 +229,11 @@
       return;
     }
     var grid = document.createElement('div');
+    var useGroup = settings.group && settings.view !== 'list' && !album;
     grid.className = 'grid ' + (settings.view === 'list' ? 'list' : ('g'+settings.cols));
     var last = '';
-    list.forEach(function(item){
-      if(settings.group && settings.view !== 'list'){
+    list.forEach(function(item, index){
+      if(useGroup){
         var label = monthOf(item.date);
         if(label !== last){
           if(grid.children.length) host.appendChild(grid);
@@ -233,7 +246,7 @@
           last = label;
         }
       }
-      grid.appendChild(tile(item));
+      grid.appendChild(tile(item, list, index));
     });
     host.appendChild(grid);
   }
@@ -257,9 +270,15 @@
     if(album){
       var back = document.createElement('button');
       back.className = 'ghost';
-      back.textContent = 'All albums';
-      back.addEventListener('click', function(){ album = ''; render(); });
+      back.type = 'button';
+      back.textContent = 'Albums';
+      back.addEventListener('click', function(){ album = ''; showView('albums'); render(); });
       host.appendChild(back);
+      var folderItems = sorted(items.filter(function(i){ return (i.folder || 'Library') === album; }));
+      var box = document.createElement('div');
+      host.appendChild(box);
+      paintGrid(box, folderItems);
+      return;
     }
     var counts = {};
     items.forEach(function(i){ var f = i.folder || 'Library'; counts[f] = (counts[f]||0)+1; });
@@ -272,7 +291,7 @@
       b.className = 'tile';
       b.type = 'button';
       b.innerHTML = '<div class="meta" style="font-size:16px;color:var(--ink);padding:18px 10px">'+esc(name)+'<br><span style="color:var(--muted)">'+counts[name]+'</span></div>';
-      b.addEventListener('click', function(){ album = name; showView('photos'); render(); });
+      b.addEventListener('click', function(){ album = name; showView('albums'); render(); });
       grid.appendChild(b);
     });
     host.appendChild(grid);
@@ -322,6 +341,19 @@
     $('doFolder').onclick = function(){ $('pick').setAttribute('webkitdirectory',''); $('pick').click(); };
   }
 
+  function openAt(list, index){
+    viewerList = list || [];
+    viewerIndex = index || 0;
+    if(!viewerList.length) return;
+    openItem(viewerList[viewerIndex]);
+  }
+  function stepView(dir){
+    if(!viewerList.length) return;
+    viewerIndex += dir;
+    if(viewerIndex < 0) viewerIndex = viewerList.length - 1;
+    if(viewerIndex >= viewerList.length) viewerIndex = 0;
+    openItem(viewerList[viewerIndex]);
+  }
   function openItem(item){
     $('viewer').classList.add('on');
     $('vtitle').textContent = item.name;
@@ -331,51 +363,27 @@
     controls.innerHTML = '';
     $('editBtn').style.display = item.kind === 'video' ? 'none' : 'inline-block';
     $('editBtn').onclick = function(){ editImage(item); };
+    var oldSave = document.querySelector('.savekeep');
+    if(oldSave) oldSave.remove();
     if(native && native.saveStatus){
       var keep = document.createElement('button');
-      keep.className = 'ghost';
+      keep.className = 'ghost savekeep';
       keep.type = 'button';
       keep.textContent = 'Save';
-      keep.onclick = function(){ native.saveStatus(item.id); scanAll(); };
-      $('vtitle').after ? $('vtitle').after(keep) : $('vtitle').parentNode.appendChild(keep);
-    }
-    if(item.kind === 'video' && native && native.play){
-      native.play(item.id);
-      controls.innerHTML = '<div class="empty">Playing in the gallery player. Use the player controls for pause, seek, and fullscreen. Back returns here.</div>';
-      return;
+      keep.onclick = function(){ native.saveStatus(item.id); };
+      $('editBtn').parentNode.insertBefore(keep, $('editBtn'));
     }
     if(item.kind === 'video'){
       var v = document.createElement('video');
       v.src = srcOf(item);
-      v.controls = false;
+      v.controls = true;
+      v.autoplay = true;
       v.playsInline = true;
-      v.style.filter = FILTERS.none;
+      v.setAttribute('playsinline', '');
       stage.appendChild(v);
-      controls.innerHTML = '<input id="seek" type="range" min="0" max="1000" value="0"><div class="row"><button class="ghost" id="play" type="button">Play</button><span id="time">0:00</span><select id="speed"><option>0.5</option><option selected>1</option><option>1.25</option><option>1.5</option><option>2</option></select></div><div class="filters" id="vfilters"></div><div class="row"><button class="ghost" id="full" type="button">Fullscreen</button></div>';
-      Object.keys(FILTERS).forEach(function(name){
-        var b = document.createElement('button');
-        b.className = 'chip' + (name==='none'?' on':'');
-        b.textContent = name;
-        b.type = 'button';
-        b.onclick = function(){
-          v.style.filter = FILTERS[name];
-          var chips = $('vfilters').children;
-          for(var i=0;i<chips.length;i++) chips[i].classList.toggle('on', chips[i]===b);
-        };
-        $('vfilters').appendChild(b);
-      });
-      $('play').onclick = function(){ if(v.paused) v.play(); else v.pause(); };
-      v.addEventListener('timeupdate', function(){
-        if(!v.duration) return;
-        $('seek').value = Math.round(1000 * v.currentTime / v.duration);
-        $('time').textContent = fmt(v.currentTime) + ' / ' + fmt(v.duration);
-      });
-      $('seek').oninput = function(){ if(v.duration) v.currentTime = v.duration * (this.value/1000); };
-      $('speed').onchange = function(){ v.playbackRate = Number(this.value); };
-      $('full').onclick = function(){ if(v.requestFullscreen) v.requestFullscreen(); };
       v.play().catch(function(){});
       v.addEventListener('error', function(){
-        controls.insertAdjacentHTML('beforeend', '<div class="empty">This codec did not start in the browser. The phone and Windows apps play it in their own player.</div>');
+        if(native && native.play) native.play(item.id);
       });
       return;
     }
@@ -470,7 +478,7 @@
     statuses = native.statuses ? take(native.statuses()) : [];
     saved = native.savedStatuses ? take(native.savedStatuses()) : [];
     render();
-    showView('photos');
+    showView('albums');
   }
   function addFiles(fileList){
     var files = Array.prototype.slice.call(fileList || []);
@@ -488,7 +496,7 @@
         file: file,
         blobUrl: URL.createObjectURL(file)
       };
-      function push(){ items.push(item); pending--; if(!pending){ render(); showView(item.kind==='video'?'videos':'photos'); } }
+      function push(){ items.push(item); pending--; if(!pending){ render(); showView('albums'); } }
       if(item.kind === 'raw'){
         var reader = new FileReader();
         reader.onload = function(){
@@ -525,7 +533,20 @@
   $('closeView').onclick = function(){ $('viewer').classList.remove('on'); $('stage').innerHTML = ''; };
   $('sheet').addEventListener('click', function(e){ if(e.target === $('sheet')) $('sheet').classList.remove('on'); });
   $('pick').addEventListener('change', function(){ addFiles(this.files); this.value = ''; });
+  var swipeX = 0;
+  $('stage').addEventListener('touchstart', function(e){ swipeX = e.changedTouches[0].clientX; }, {passive:true});
+  $('stage').addEventListener('touchend', function(e){
+    var dx = e.changedTouches[0].clientX - swipeX;
+    if(Math.abs(dx) < 50) return;
+    stepView(dx < 0 ? 1 : -1);
+  }, {passive:true});
+  document.addEventListener('keydown', function(e){
+    if(!$('viewer').classList.contains('on')) return;
+    if(e.key === 'ArrowRight') stepView(1);
+    if(e.key === 'ArrowLeft') stepView(-1);
+  });
   applyNight();
+  showView('albums');
   render();
   if(native && native.scan) scanAll();
   if(location.protocol === 'http:' || location.protocol === 'https:'){
@@ -534,7 +555,7 @@
   window.galleryBack = function(){
     if($('sheet').classList.contains('on')){ $('sheet').classList.remove('on'); return true; }
     if($('viewer').classList.contains('on')){ $('viewer').classList.remove('on'); $('stage').innerHTML=''; return true; }
-    if(album){ album = ''; render(); return true; }
+    if(album){ album = ''; showView('albums'); render(); return true; }
     return false;
   };
 })();
